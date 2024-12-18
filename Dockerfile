@@ -1,16 +1,16 @@
-# Use a Python-specific Alpine base image
-FROM python:3.10-alpine
+# Use a Python image instead of base Alpine
+FROM python:3.10-slim
 
-# Install dependencies and required build tools
-RUN apk add --no-cache --update \
-    bash \
+# Install necessary system dependencies
+RUN apt-get update && apt-get install -y \
     gcc \
-    musl-dev \
     libffi-dev \
     python3-dev \
-    py3-pip
+    build-essential \
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
 
-# Add requirements.txt and install Python dependencies
+# Add the requirements file and install Python dependencies
 ADD ./webapp/requirements.txt /tmp/requirements.txt
 RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
 
@@ -19,7 +19,7 @@ ADD ./webapp /opt/webapp/
 WORKDIR /opt/webapp
 
 # Create and switch to a non-root user
-RUN adduser -D myuser
+RUN useradd -m myuser
 USER myuser
 
 # Run the application
