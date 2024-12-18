@@ -1,26 +1,24 @@
-# Use a Python image instead of base Alpine
-FROM python:3.10-slim
+#Grab the latest alpine image
+FROM python:3.13.0a2-alpine
 
-# Install necessary system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    libffi-dev \
-    python3-dev \
-    build-essential \
-    --no-install-recommends && \
-    rm -rf /var/lib/apt/lists/*
-
-# Add the requirements file and install Python dependencies
+# Install python and pip
+RUN apk add --no-cache --update python3 py3-pip bash
 ADD ./webapp/requirements.txt /tmp/requirements.txt
-RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
 
-# Add the application code
+# Install dependencies
+RUN pip3 install --no-cache-dir -q -r /tmp/requirements.txt
+
+# Add our code
 ADD ./webapp /opt/webapp/
 WORKDIR /opt/webapp
 
-# Create and switch to a non-root user
-RUN useradd -m myuser
+# Expose is NOT supported by Heroku
+# EXPOSE 5000 		
+
+# Run the image as a non-root user
+RUN adduser -D myuser
 USER myuser
 
-# Run the application
-CMD gunicorn --bind 0.0.0.0:$PORT app:app
+# Run the app.  CMD is required to run on Heroku
+# $PORT is set by Heroku			
+CMD gunicorn --bind 0.0.0.0:$PORT wsgi
